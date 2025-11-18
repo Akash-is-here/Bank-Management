@@ -1,6 +1,6 @@
-
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 int create_account();
 void Deposit_Money();
@@ -30,10 +30,11 @@ int main()
         printf("\n2. Login");
         printf("\n3. EXIT");
         printf("\nEnter Your Choice... ");
-        scanf("%d", &choose);
-        FILE *f = fopen("account.dat", "wb");
-        if (f)
-            fclose(f);
+        if (scanf("%d", &choose) != 1) {
+            int ch;
+            while ((ch = getchar()) != '\n' && ch != EOF);
+            continue;
+        }
 
         switch (choose)
         {
@@ -56,7 +57,7 @@ int main()
 }
 void login()
 {
-    Account acc;
+    Account acc = {0};
     FILE *file = fopen(ACCOUNT_FILE, "rb");
     if (file == NULL)
     {
@@ -65,15 +66,21 @@ void login()
     }
     int acc_no, flag = 0;
     char password[50];
-    char c;
+    int ch;
     printf("Enter Account Number: ");
-    scanf("%d", &acc_no);
-    do
-    {
-        c = getchar();
-    } while (c != '\n' && c != EOF);
+    if (scanf("%d", &acc_no) != 1) {
+        while ((ch = getchar()) != '\n' && ch != EOF);
+        printf("Invalid account number input\n");
+        fclose(file);
+        return;
+    }
+    while ((ch = getchar()) != '\n' && ch != EOF); // clear rest of line
     printf("Enter Your Password: ");
-    fgets(password, sizeof(password), stdin);
+    if (fgets(password, sizeof(password), stdin) == NULL) {
+        printf("Error reading password\n");
+        fclose(file);
+        return;
+    }
     password[strcspn(password, "\r\n")] = '\0';
 
     while (fread(&acc, sizeof(acc), 1, file))
@@ -81,7 +88,6 @@ void login()
         if (acc.acc_no == acc_no)
         {
             acc.password[strcspn(acc.password, "\r\n")] = '\0';
-            password[strcspn(password, "\r\n")] = '\0';
 
             if (strcmp(acc.password, password) == 0)
             {
@@ -90,6 +96,7 @@ void login()
             }
             else
             {
+                // Helpful debug output — comment out in production if you don't want to reveal passwords
                 printf("stored:[%s] entered:[%s]\n", acc.password, password);
             }
         }
@@ -98,12 +105,12 @@ void login()
 
     if (flag == 1)
     {
-        printf("Login Sucessful, %s", acc.name);
+        printf("Login Successful, %s\n", acc.name);
         choose_fun();
     }
     else
     {
-        printf("Invalid Credentials!!");
+        printf("Invalid Credentials!!\n");
     }
 }
 
@@ -115,8 +122,14 @@ void choose_fun()
         printf("\n1. Deposit Money");
         printf("\n2. Withdraw Money");
         printf("\n3. Check Balance");
-        printf("\n4. X IT");
-        scanf("%d", &choice);
+        printf("\n4. EXIT");
+        printf("\nChoose an option: ");
+        if (scanf("%d", &choice) != 1) {
+            int ch;
+            while ((ch = getchar()) != '\n' && ch != EOF);
+            printf("Invalid input\n");
+            continue;
+        }
 
         switch (choice)
         {
@@ -141,26 +154,31 @@ void choose_fun()
 }
 int create_account()
 {
-    Account acc;
+    Account acc = {0};
     FILE *file = fopen(ACCOUNT_FILE, "ab+");
     if (file == NULL)
     {
         printf("Unable to Open File!!");
         return 0;
     }
-    char c;
-    do
-    {
-        c = getchar();
-    } while (c != '\n' && c != EOF);
+    int ch;
+    while ((ch = getchar()) != '\n' && ch != EOF);
     printf("Enter Name: ");
-    fgets(acc.name, sizeof(acc.name), stdin);
-    int ind = strcspn(acc.name, "\n");
-    acc.name[ind] = '\0';
+    if (fgets(acc.name, sizeof(acc.name), stdin) == NULL) {
+        fclose(file);
+        printf("Error reading name\n");
+        return 0;
+    }
+    acc.name[strcspn(acc.name, "\r\n")] = '\0';
+
     printf("Enter Your Password: ");
-    fgets(acc.password, sizeof(acc.password), stdin);
-    int indx = strcspn(acc.password, "\n");
-    acc.password[indx] = '\0';
+    if (fgets(acc.password, sizeof(acc.password), stdin) == NULL) {
+        fclose(file);
+        printf("Error reading password\n");
+        return 0;
+    }
+    acc.password[strcspn(acc.password, "\r\n")] = '\0';
+
     acc.balance = 0;
     acc.acc_no = get_nxt_acc_no();
     if (acc.acc_no == 0)
@@ -175,8 +193,8 @@ int create_account()
     printf("\nAccount Owner Name : %s", acc.name);
     printf("\nAccount Number : %d", acc.acc_no);
     printf("\nAccount Balance : %.2f", acc.balance);
-    printf("\nAccount Passowrd: %s", acc.password);
-    printf("\nAccount Created Sucessfully!");
+    printf("\nAccount Password: %s", acc.password);
+    printf("\nAccount Created Successfully!\n");
     return 1;
 }
 
@@ -196,7 +214,6 @@ int get_nxt_acc_no()
         fprintf(file, "%d", las_accno);
         fflush(file);
         rewind(file);
-        // return 0;
     }
     else
     {
@@ -218,7 +235,7 @@ void Deposit_Money()
     FILE *file = fopen(ACCOUNT_FILE, "rb+");
     if (file == NULL)
     {
-        printf("Unble to open the file!!");
+        printf("Unable to open the file!!");
         return;
     }
 
@@ -226,9 +243,19 @@ void Deposit_Money()
     float money;
     Account acc_to_depo;
     printf("Enter Account No. :");
-    scanf("%d", &acc_no);
+    if (scanf("%d", &acc_no) != 1) {
+        int ch; while ((ch = getchar()) != '\n' && ch != EOF);
+        printf("Invalid account number input\n");
+        fclose(file);
+        return;
+    }
     printf("Enter Amount to Deposit :");
-    scanf("%f", &money);
+    if (scanf("%f", &money) != 1) {
+        int ch; while ((ch = getchar()) != '\n' && ch != EOF);
+        printf("Invalid amount\n");
+        fclose(file);
+        return;
+    }
 
     while (fread(&acc_to_depo, sizeof(acc_to_depo), 1, file))
     {
@@ -238,13 +265,13 @@ void Deposit_Money()
             fseek(file, -sizeof(acc_to_depo), SEEK_CUR);
             fwrite(&acc_to_depo, sizeof(acc_to_depo), 1, file);
             fclose(file);
-            printf("Sucessfully deposited Rs. %.2f", money);
-            printf("\nNew Balance : Rs.%.2f", acc_to_depo.balance);
+            printf("Successfully deposited Rs. %.2f", money);
+            printf("\nNew Balance : Rs.%.2f\n", acc_to_depo.balance);
             return;
         }
     }
     fclose(file);
-    printf("Account No. %d \n Not Found!!", acc_no);
+    printf("Account No. %d \n Not Found!!\n", acc_no);
 }
 void Withdraw_Money()
 {
@@ -259,9 +286,19 @@ void Withdraw_Money()
     float money;
     Account acc_witdr;
     printf("Enter Your Account Number: ");
-    scanf("%d", &acc_no);
+    if (scanf("%d", &acc_no) != 1) {
+        int ch; while ((ch = getchar()) != '\n' && ch != EOF);
+        printf("Invalid account number input\n");
+        fclose(file);
+        return;
+    }
     printf("Enter Amount to Withdraw :");
-    scanf("%f", &money);
+    if (scanf("%f", &money) != 1) {
+        int ch; while ((ch = getchar()) != '\n' && ch != EOF);
+        printf("Invalid amount\n");
+        fclose(file);
+        return;
+    }
 
     while (fread(&acc_witdr, sizeof(acc_witdr), 1, file))
     {
@@ -272,41 +309,48 @@ void Withdraw_Money()
                 acc_witdr.balance -= money;
                 fseek(file, -sizeof(acc_witdr), SEEK_CUR);
                 fwrite(&acc_witdr, sizeof(acc_witdr), 1, file);
-                printf("Sucessfully Withdrawn Rs.%.2f", money);
-                printf("\nRemaning Balance : Rs.%.2f", acc_witdr.balance);
+                printf("Successfully Withdrawn Rs.%.2f", money);
+                printf("\nRemaining Balance : Rs.%.2f\n", acc_witdr.balance);
             }
             else
             {
-                printf("Inssuficient Balance!!");
+                printf("Insufficient Balance!!\n");
             }
             fclose(file);
             return;
         }
     }
     fclose(file);
-    printf("Unable to Withdraw from Account No. %d \n Not Found!!", acc_no);
+    printf("Unable to Withdraw from Account No. %d \n Not Found!!\n", acc_no);
 }
 void Check_Balance()
 {
     FILE *file = fopen(ACCOUNT_FILE, "rb");
     if (file == NULL)
     {
-        printf("Unable to Open File!!");
+        printf("Unable to Open File!!\n");
+        return;
     }
     Account acc_read;
     int acc_no;
     printf("Enter Your Account Number: ");
-    scanf("%d", &acc_no);
+    if (scanf("%d", &acc_no) != 1) {
+        int ch; while ((ch = getchar()) != '\n' && ch != EOF);
+        printf("Invalid account number input\n");
+        fclose(file);
+        return;
+    }
 
     while (fread(&acc_read, sizeof(acc_read), 1, file))
     {
         if (acc_read.acc_no == acc_no)
         {
-            printf("Your Current Account Balance : Rs %.2f", acc_read.balance);
+            printf("Your Current Account Balance : Rs %.2f\n", acc_read.balance);
             fclose(file);
             return;
         }
     }
 
-    printf("Account No: %d\nNot Found!!", acc_no);
+    fclose(file);
+    printf("Account No: %d\nNot Found!!\n", acc_no);
 }
