@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <string.h>
 
@@ -71,23 +70,16 @@ void login()
     } while (c != '\n' && c != EOF);
     printf("Enter Your Password: ");
     fgets(password, sizeof(password), stdin);
-    password[strcspn(password, "\r\n")] = '\0';
+    password[strcspn(password, "\n")] = '\0';
 
     while (fread(&acc, sizeof(acc), 1, file))
     {
         if (acc.acc_no == acc_no)
         {
-            acc.password[strcspn(acc.password, "\r\n")] = '\0';
-            password[strcspn(password, "\r\n")] = '\0';
-
             if (strcmp(acc.password, password) == 0)
             {
                 flag = 1;
                 break;
-            }
-            else
-            {
-                printf("stored:[%s] entered:[%s]\n", acc.password, password);
             }
         }
     }
@@ -179,12 +171,11 @@ int create_account()
 
 int get_nxt_acc_no()
 {
-    const char *fname = "last_accno.txt";
-    FILE *file = fopen(fname, "r+");
+    FILE *file = fopen("last_accno.txt", "r+");
     int las_accno = 10000;
     if (file == NULL)
     {
-        file = fopen(fname, "w+");
+        file = fopen("last_accno.txt", "w+");
         if (file == NULL)
         {
             printf("Unable to open the file!!");
@@ -193,12 +184,11 @@ int get_nxt_acc_no()
         fprintf(file, "%d", las_accno);
         fflush(file);
         rewind(file);
-        // return 0;
+        return 0;
     }
     else
     {
-        if (fscanf(file, "%d", &las_accno) != 1)
-            las_accno = 10000;
+        fscanf(file, "%d", &las_accno);
     }
 
     las_accno++;
