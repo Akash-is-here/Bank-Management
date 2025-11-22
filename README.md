@@ -1,2 +1,5 @@
 # Bank-Management
-This is a simple Bank Management System written in C.   It allows users to create accounts, deposit and withdraw money, and check their balance.   The project uses file handling to store account data persistently in a `.dat` file.
+
+This is a simple Bank Management System written in C. It allows users to create accounts, deposit and withdraw money, and check their balance. The project uses file handling to store account data persistently in a `.dat` file.
+
+<p>This was hard to find error for login credentials, but i used gitcopilot ai and did it...</p>
